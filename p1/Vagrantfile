@@ -1,29 +1,40 @@
 Vagrant.configure("2") do |config|
 
-    # General Settings
-    # + Initial image (Ubuntu 24.04)
-    # + Hostname
-    # + Shared folder for files transfer
-    config.vm.box = "bento/ubuntu-24.04"  # initial image of the 
-    config.vm.hostname = "tmazitovS" # name of vm
-    config.vm.synced_folder ".", "/vagrant" # shared folder setup
+    # Define the server (1-st virtual machine)
+    config.vm.define "tmazitovS" do |server|
+    
+        # General Settings
+        # + Initial image (Ubuntu 24.04)
+        # + Hostname
+        # + Shared folder for files transfer
+        server.vm.box = "bento/ubuntu-24.04"  # initial image of the 
+        server.vm.hostname = "tmazitovS" # name of vm
+        server.vm.synced_folder ".", "/vagrant" # shared folder setup
+    
+        # Network
+        # + Host:80 -> VM:8000
+        # + Add to public network with specified IP address
+        # server.vm.network "forwarded_port", guest: 80, host: 8080
+        server.vm.network "private_network", ip: "192.168.56.110"
+    
+        # Provider Settings (VirtualBox)
+        # + 512mb RAM
+        # + 1 core CPU
+        server.vm.provider "virtualbox" do |vb|
+            vb.memory = "512"
+            vb.cpus = 1
+        end
+    
+        # Provision Settings (Initialization commands)
+        server.vm.provision "shell", inline: <<-SHELL
+            apt-get update
+        SHELL
 
-    # Network
-    # + Host:80 -> VM:8000
-    # + Add to public network with specified IP address
-    # config.vm.network "forwarded_port", guest: 80, host: 8080
-    config.vm.network "private_network", ip: "192.168.56.110"
-
-    # Provider Settings (VirtualBox)
-    # + 512mb RAM
-    # + 1 core CPU
-    config.vm.provider "virtualbox" do |vb|
-        vb.memory = "512"
-        vb.cpus = 1
     end
 
-    # Provision Settings (Initialization commands)
-    config.vm.provision "shell", inline: <<-SHELL
-        apt-get update
-    SHELL
+    # Define the server worker (2-nd virtual machine)
+    config.vm.define "nmagdanovSW" do |server_worker|
+
+    end
+
 end
