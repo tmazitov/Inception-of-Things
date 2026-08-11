@@ -1,3 +1,10 @@
+K3S_IP = "192.168.56.110"
+HOSTS = {
+  "app1.com" => K3S_IP,
+  "app2.com" => K3S_IP,
+  "app3.com" => K3S_IP
+}
+
 Vagrant.configure("2") do |config|
 
     #SSH configuration
@@ -17,7 +24,7 @@ Vagrant.configure("2") do |config|
         # + Host:80 -> VM:8000
         # + Add to public network with specified IP address
         # server.vm.network "forwarded_port", guest: 80, host: 8080
-        server.vm.network "private_network", ip: "192.168.56.110"
+        server.vm.network "private_network", ip: K3S_IP
     
         # Provider Settings (VirtualBox)
         # + 512mb RAM
@@ -35,5 +42,13 @@ Vagrant.configure("2") do |config|
 
         # server_worker.vm.provision "shell"
         server.vm.provision "shell", path: "scripts/server-provisioning.sh"
+    end
+
+    config.trigger.after :up do |trigger|
+    trigger.info = "Configuring local /etc/hosts..."
+
+    trigger.run = {
+        inline: "bash scripts/update-hosts.sh"
+    }
     end
 end
