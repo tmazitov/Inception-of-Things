@@ -1,0 +1,87 @@
+name: release
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'p3/app/**'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/iot-app
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # need to push git-tag and updated config
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # without it don't see tags
+
+      - name: Calculate next version number
+        id: ver
+        run: |
+          latest=$(git tag -l 'v*' \
+            | grep -E '^v[0-9]+$' \
+            | sed 's/^v//' \
+            | sort -n \
+            | tail -1)
+          next="v$(( ${latest:-0} + 1 ))"
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+          echo "Предыдущая: ${latest:-нет}, новая: $next"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Assemble and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./p3/app
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.IMAGE }}:${{ steps.ver.outputs.version }}
+          build-args: |
+            COMMIT=${{ github.sha }}
+            VERSION=${{ steps.ver.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create a git-tag
+        run: |
+          git tag "${{ steps.ver.outputs.version }}"
+          git push origin "${{ steps.ver.outputs.version }}"
+
+      - name: Update image in Argo CD config
+        run: |
+          manifest=p3/confs/deployment.yaml
+          if [ ! -f "$manifest" ]; then
+            echo "::warning::$manifest not found, step was skipped"
+            exit 0
+          fi
+          sed -i -E "s#(image: ${{ env.IMAGE }}):.*#\1:${{ steps.ver.outputs.version }}#" "$manifest"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- "$manifest"; then
+            echo "Config already has current version"
+            exit 0
+          fi
+          git add "$manifest"
+          git commit -m "chore: bump image to ${{ steps.ver.outputs.version }} [skip ci]"
+          git push origin HEAD:master
+
+      - name: Resume
+        run: |
+          echo "### Release ${{ steps.ver.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Image: \`${{ env.IMAGE }}:${{ steps.ver.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
