@@ -185,21 +185,47 @@ fi
 echo
 info "[6/7] Installing Vagrant ${VAGRANT_VERSION}..."
 
-if ! command -v vagrant >/dev/null 2>&1; then
+INSTALLED_VAGRANT=""
+
+if command -v vagrant >/dev/null 2>&1; then
+    INSTALLED_VAGRANT=$(vagrant --version | awk '{print $2}')
+fi
+
+if [[ "${INSTALLED_VAGRANT}" != "${VAGRANT_VERSION}" ]]; then
+    info "Installing Vagrant ${VAGRANT_VERSION} (current: ${INSTALLED_VAGRANT:-not installed})..."
+
     TMPDIR_VAGRANT=$(mktemp -d)
     cd "${TMPDIR_VAGRANT}"
 
-    info "Downloading vagrant ${VAGRANT_VERSION}..."
-    wget -q "https://releases.hashicorp.com/vagrant/${VAGRANT_VERSION}/${VAGRANT_DEB}"
+    info "Downloading Vagrant ${VAGRANT_VERSION}..."
+
+    wget -q \
+        "https://releases.hashicorp.com/vagrant/${VAGRANT_VERSION}/${VAGRANT_DEB}"
 
     info "Installing .deb package..."
+
     dpkg -i "${VAGRANT_DEB}" || apt-get install -f -y
 
     rm -rf "${TMPDIR_VAGRANT}"
 else
-    INSTALLED_VER=$(vagrant --version 2>/dev/null | awk '{print $2}')
-    info "Vagrant is already installed (version ${INSTALLED_VER})."
+    info "Vagrant ${VAGRANT_VERSION} is already installed."
 fi
+
+# if ! command -v vagrant >/dev/null 2>&1; then
+#     TMPDIR_VAGRANT=$(mktemp -d)
+#     cd "${TMPDIR_VAGRANT}"
+
+#     info "Downloading vagrant ${VAGRANT_VERSION}..."
+#     wget -q "https://releases.hashicorp.com/vagrant/${VAGRANT_VERSION}/${VAGRANT_DEB}"
+
+#     info "Installing .deb package..."
+#     dpkg -i "${VAGRANT_DEB}" || apt-get install -f -y
+
+#     rm -rf "${TMPDIR_VAGRANT}"
+# else
+#     INSTALLED_VER=$(vagrant --version 2>/dev/null | awk '{print $2}')
+#     info "Vagrant is already installed (version ${INSTALLED_VER})."
+# fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Step 7 — Set VirtualBox as default Vagrant provider
