@@ -202,10 +202,42 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Step 7 — Verify everything
+# Step 7 — Set VirtualBox as default Vagrant provider
 # ─────────────────────────────────────────────────────────────────────────────
 echo
-info "[7/7] Verifying installation..."
+info "[7/8] Setting VirtualBox as the default Vagrant provider..."
+
+# Set the environment variable system-wide (persists across reboots/logins)
+VAGRANT_PROFILE="/etc/profile.d/vagrant-provider.sh"
+cat > "${VAGRANT_PROFILE}" <<'EOF'
+# Force Vagrant to use VirtualBox instead of libvirt
+export VAGRANT_DEFAULT_PROVIDER=virtualbox
+EOF
+chmod 644 "${VAGRANT_PROFILE}"
+info "Created ${VAGRANT_PROFILE}"
+
+# Also export for the current session
+export VAGRANT_DEFAULT_PROVIDER=virtualbox
+
+# Remove vagrant-libvirt plugin if it was installed (it causes auto-detection issues)
+SUDO_USER_NAME="${SUDO_USER:-}"
+if [[ -n "${SUDO_USER_NAME}" ]]; then
+    if sudo -u "${SUDO_USER_NAME}" vagrant plugin list 2>/dev/null | grep -q "vagrant-libvirt"; then
+        info "Removing vagrant-libvirt plugin..."
+        sudo -u "${SUDO_USER_NAME}" vagrant plugin uninstall vagrant-libvirt || warn "Could not remove vagrant-libvirt plugin"
+    else
+        info "vagrant-libvirt plugin is not installed (good)."
+    fi
+fi
+
+info "Default provider is now: virtualbox"
+info "You can also force it per-command with: vagrant up --provider=virtualbox"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Step 8 — Verify everything
+# ─────────────────────────────────────────────────────────────────────────────
+echo
+info "[8/8] Verifying installation..."
 
 echo
 echo "  Debian version:"
