@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: iot-app
-          image: tmazitov/iot-app:v2
+          image: tmazitov/iot-app:v3
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
