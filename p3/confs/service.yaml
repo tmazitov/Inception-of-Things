@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: iot-app
+  namespace: dev
+spec:
+  type: ClusterIP
+  selector:
+    app: iot-app
+  ports:
+    - name: http
+      port: 8888        # порт Service — на него смотрит port-forward
+      targetPort: 8080  # порт, который слушает приложение
