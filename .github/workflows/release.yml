@@ -36,7 +36,7 @@ jobs:
             | tail -1)
           next="v$(( ${latest:-0} + 1 ))"
           echo "version=$next" >> "$GITHUB_OUTPUT"
-          echo "Предыдущая: ${latest:-нет}, новая: $next"
+          echo "Previous: ${latest:-none}, new: $next"
 
       - uses: docker/setup-buildx-action@v3
 

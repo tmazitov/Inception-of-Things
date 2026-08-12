@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Поднимает кластер K3d, ставит Argo CD и создаёт Application.
+# Creates the K3d cluster, installs Argo CD and applies the Application.
 set -euo pipefail
 
 CLUSTER="${CLUSTER:-iot}"
@@ -7,11 +7,11 @@ CONFS="$(cd "$(dirname "${BASH_SOURCE[0]}")/../confs" && pwd)"
 
 log() { printf '\033[1;32m[setup]\033[0m %s\n' "$*"; }
 
-# ---------- кластер ----------
+# ---------- cluster ----------
 if k3d cluster list | grep -qw "$CLUSTER"; then
-    log "Кластер '$CLUSTER' уже существует"
+    log "Cluster '$CLUSTER' already exists"
 else
-    log "Создаю кластер '$CLUSTER'..."
+    log "Creating cluster '$CLUSTER'..."
     k3d cluster create "$CLUSTER"
 fi
 
@@ -24,33 +24,33 @@ for ns in argocd dev; do
 done
 
 # ---------- Argo CD ----------
-log "Ставлю Argo CD (это займёт пару минут)..."
-# --server-side обязателен: CRD applicationsets.argoproj.io больше 256 КБ,
-# и обычный apply падает на аннотации last-applied-configuration
+log "Installing Argo CD (this takes a couple of minutes)..."
+# --server-side is required: the applicationsets.argoproj.io CRD exceeds 256 KB,
+# and a plain apply fails on the last-applied-configuration annotation
 kubectl apply -n argocd --server-side --force-conflicts \
     -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-log "Жду, пока поднимутся поды Argo CD..."
+log "Waiting for Argo CD pods to become ready..."
 kubectl wait --for=condition=available --timeout=600s \
     deployment --all -n argocd
 
 # ---------- Application ----------
-log "Применяю Application..."
+log "Applying the Application..."
 kubectl apply -f "${CONFS}/application.yaml"
 
-# ---------- итог ----------
-log "Пароль admin для Argo CD:"
+# ---------- summary ----------
+log "Argo CD admin password:"
 kubectl -n argocd get secret argocd-initial-admin-secret \
     -o jsonpath='{.data.password}' | base64 -d; echo
 
 cat <<'EOF'
 
-Дальше:
-  UI Argo CD    kubectl port-forward -n argocd svc/argocd-server 8080:443
-                открыть https://localhost:8080  (login: admin)
+Next steps:
+  Argo CD UI    kubectl port-forward -n argocd svc/argocd-server 8080:443
+                open https://localhost:8080  (login: admin)
 
-  Приложение    kubectl port-forward -n dev svc/iot-app 8888:8888
+  Application   kubectl port-forward -n dev svc/iot-app 8888:8888
                 curl http://localhost:8888
 
-  Статус        kubectl get applications -n argocd
+  Status        kubectl get applications -n argocd
 EOF

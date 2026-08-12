@@ -3,7 +3,7 @@ FROM golang:1.25-alpine AS builder
 
 WORKDIR /src
 
-# Слой с зависимостями кешируется отдельно от исходников
+# Dependency layer is cached separately from the sources
 COPY go.mod go.sum ./
 RUN go mod download
 

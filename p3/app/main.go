@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// Заполняются на этапе сборки через -ldflags "-X main.lastCommit=... -X main.version=..."
+// Injected at build time via -ldflags "-X main.lastCommit=... -X main.version=..."
 var (
 	lastCommit = "unknown"
 	version    = "dev"

@@ -9,5 +9,5 @@ spec:
     app: iot-app
   ports:
     - name: http
-      port: 8888        # порт Service — на него смотрит port-forward
-      targetPort: 8080  # порт, который слушает приложение
+      port: 8888        # Service port — the one port-forward points at
+      targetPort: 8080  # port the application listens on
