@@ -25,7 +25,9 @@ done
 
 # ---------- Argo CD ----------
 log "Ставлю Argo CD (это займёт пару минут)..."
-kubectl apply -n argocd \
+# --server-side обязателен: CRD applicationsets.argoproj.io больше 256 КБ,
+# и обычный apply падает на аннотации last-applied-configuration
+kubectl apply -n argocd --server-side --force-conflicts \
     -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 log "Жду, пока поднимутся поды Argo CD..."
