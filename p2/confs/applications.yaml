@@ -77,6 +77,6 @@ spec:
             - /bin/sh
             - -c
             - |
-              echo '<html><body><h1>APP 3 - DEFAULT</h1></body></html>' \
+              echo '<html><body><h1>APP 3</h1></body></html>' \
                 > /usr/share/nginx/html/index.html
               nginx -g 'daemon off;'
