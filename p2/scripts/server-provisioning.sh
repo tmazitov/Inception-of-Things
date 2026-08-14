@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-K3S_IP="192.168.56.110"
-MANIFEST_DIR="/vagrant/confs"
+MANIFEST_DIR="/tmp/confs"
 
 echo "========================================"
 echo " Installing dependencies"
@@ -12,6 +11,18 @@ apt-get update
 apt-get install -y curl
 
 echo "========================================"
+echo " Checking manifest directory"
+echo "========================================"
+
+if [ ! -d "$MANIFEST_DIR" ]; then
+    echo "ERROR: $MANIFEST_DIR does not exist"
+    exit 1
+fi
+
+echo "Manifests found:"
+ls -la "$MANIFEST_DIR"
+
+echo "========================================"
 echo " Installing K3s"
 echo "========================================"
 
@@ -19,11 +30,7 @@ if ! command -v k3s >/dev/null 2>&1; then
 
     curl -sfL https://get.k3s.io | \
         INSTALL_K3S_EXEC="server" sh -s - \
-        --write-kubeconfig-mode 644 \
-        --node-ip "$K3S_IP" \
-        --advertise-address "$K3S_IP" \
-        --tls-san "$K3S_IP" \
-        --flannel-iface eth1
+        --write-kubeconfig-mode 644
 
 else
     echo "K3s is already installed"
@@ -96,7 +103,7 @@ echo "========================================"
 echo " K3s cluster status"
 echo "========================================"
 
-k3s kubectl get nodes
+k3s kubectl get nodes -o wide
 
 echo
 echo "========================================"
@@ -132,48 +139,22 @@ echo " Testing applications"
 echo "========================================"
 
 echo "--- app1.com ---"
-curl -s -H "Host: app1.com" "http://$K3S_IP"
+curl -s -H "Host: app1.com" "http://127.0.0.1"
 echo
 
 echo "--- app2.com ---"
-curl -s -H "Host: app2.com" "http://$K3S_IP"
+curl -s -H "Host: app2.com" "http://127.0.0.1"
+echo
+
+echo "--- app3.com ---"
+curl -s -H "Host: app3.com" "http://127.0.0.1"
 echo
 
 echo "--- default ---"
-curl -s -H "Host: anything.com" "http://$K3S_IP"
+curl -s -H "Host: anything.com" "http://127.0.0.1"
 echo
 
 echo
 echo "========================================"
 echo " K3s provisioning complete!"
 echo "========================================"
-
-# #!/usr/bin/env bash
-# set -euo pipefail
-
-# curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server" sh -s - \
-#     --write-kubeconfig-mode 644 \
-#     --node-ip 192.168.56.110 \
-#     --advertise-address 192.168.56.110 \
-#     --tls-san 192.168.56.110 \
-#     --flannel-iface eth1
-
-# echo "Waiting for K3s server to become ready..."
-
-# # Wait until K3s is actually running
-# until systemctl is-active --quiet k3s; do
-#     sleep 2
-# done
-
-# echo "K3s server is running"
-
-# # Copy the node token to the Vagrant shared folder
-# cp /var/lib/rancher/k3s/server/node-token /vagrant/k3s-node-token
-
-# chmod 600 /vagrant/k3s-node-token
-
-# echo "K3s node token has been made available to the worker."
-# echo "K3s server installation complete"
-
-# # Show cluster status
-# k3s kubectl get nodes
