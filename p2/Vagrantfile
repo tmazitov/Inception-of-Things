@@ -9,7 +9,7 @@ Vagrant.configure("2") do |config|
 
     #SSH configuration
     config.ssh.insert_key = true
-    # Define the server (1-st virtual machine)
+    # Define the server 
     config.vm.define "tmazitovS" do |server|
     
         # General Settings
@@ -18,30 +18,28 @@ Vagrant.configure("2") do |config|
         # + Shared folder for files transfer
         server.vm.box = "bento/ubuntu-24.04"  # initial image of the 
         server.vm.hostname = "tmazitovS" # name of vm
-        server.vm.synced_folder ".", "/vagrant", disabled:true # shared folder setup
+        server.vm.synced_folder ".", "/vagrant" # shared folder setup
     
         # Network
         # + Host:80 -> VM:8000
         # + Add to public network with specified IP address
         # server.vm.network "forwarded_port", guest: 80, host: 8080
-        server.vm.network "forwarded_port", guest: 80, host: 8080
-
+        server.vm.network "private_network", ip: K3S_IP
     
-        # Provider Settings
-        server.vm.provider "qemu" do |qe|
-            qe.memory = "2048"
-            qe.cpus = 2
+        # Provider Settings (VirtualBox)
+        server.vm.provider "virtualbox" do |vb|
+            vb.memory = "2048"
+            vb.cpus = 2
         end
     
         # Provision Settings (Initialization commands)
         server.vm.provision "shell", inline: <<-SHELL
             apt-get update
             apt-get install -y curl
-        SHELL
 
-        server.vm.provision "file",
-            source: "confs",
-            destination: "/tmp/confs"
+            swapoff -a
+            sed -ri '/\\sswap\\s/s/^#?/#/' /etc/fstab
+        SHELL
 
         # server_worker.vm.provision "shell"
         server.vm.provision "shell", path: "scripts/server-provisioning.sh"
