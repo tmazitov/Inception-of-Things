@@ -106,28 +106,28 @@ apt-get install -y -qq \
 # ─────────────────────────────────────────────────────────────────────────────
 # Step 4 — Blacklist KVM modules (conflicts with VirtualBox)
 # ─────────────────────────────────────────────────────────────────────────────
-echo
-info "[4/7] Blacklisting KVM kernel modules (VirtualBox needs exclusive VT-x)..."
+# echo
+# info "[4/7] Blacklisting KVM kernel modules (VirtualBox needs exclusive VT-x)..."
 
-BLACKLIST_FILE="/etc/modprobe.d/blacklist-kvm.conf"
-if [[ ! -f "${BLACKLIST_FILE}" ]]; then
-    cat > "${BLACKLIST_FILE}" <<'EOF'
-# Blacklist KVM so VirtualBox can use VT-x exclusively
-blacklist kvm
-blacklist kvm_intel
-blacklist kvm_amd
-EOF
-    info "Created ${BLACKLIST_FILE}"
+# BLACKLIST_FILE="/etc/modprobe.d/blacklist-kvm.conf"
+# if [[ ! -f "${BLACKLIST_FILE}" ]]; then
+#     cat > "${BLACKLIST_FILE}" <<'EOF'
+# # Blacklist KVM so VirtualBox can use VT-x exclusively
+# blacklist kvm
+# blacklist kvm_intel
+# blacklist kvm_amd
+# EOF
+#     info "Created ${BLACKLIST_FILE}"
 
-    # Unload KVM modules if they are currently loaded
-    for mod in kvm_intel kvm_amd kvm; do
-        if lsmod | grep -q "^${mod} "; then
-            rmmod "${mod}" 2>/dev/null && info "Unloaded ${mod}" || warn "Could not unload ${mod} (may need reboot)"
-        fi
-    done
-else
-    info "KVM blacklist already in place."
-fi
+#     # Unload KVM modules if they are currently loaded
+#     for mod in kvm_intel kvm_amd kvm; do
+#         if lsmod | grep -q "^${mod} "; then
+#             rmmod "${mod}" 2>/dev/null && info "Unloaded ${mod}" || warn "Could not unload ${mod} (may need reboot)"
+#         fi
+#     done
+# else
+#     info "KVM blacklist already in place."
+# fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Step 5 — Install VirtualBox from Oracle's repository
