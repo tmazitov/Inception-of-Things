@@ -126,6 +126,10 @@ echo "========================================"
 
 k3s kubectl get ingress
 
+until curl -s -H "Host: app1.com" "http://$K3S_IP"; do
+    sleep 2
+done
+
 echo
 echo "========================================"
 echo " Testing applications"
